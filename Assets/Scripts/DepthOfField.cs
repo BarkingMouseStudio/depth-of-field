@@ -3,7 +3,7 @@ using System.Collections;
 
 // [ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
-public class PostEffects : MonoBehaviour {
+public class DepthOfField : MonoBehaviour {
   protected internal RenderTexture targetTexture;
 
   private RenderTexture grabTextureA;
@@ -101,11 +101,11 @@ public class PostEffects : MonoBehaviour {
       material.SetTexture("_BlurTexB", grabTextureC);
     }
 
-    camera.targetTexture = targetTexture;
+    // camera.targetTexture = targetTexture;
     camera.depthTextureMode = DepthTextureMode.None; // Explicitly disable depthmap
   }
 
-  void OnPostRender() {
+  void OnRenderImage(RenderTexture src, RenderTexture dest) {
     Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
     Shader.SetGlobalFloat("_DepthAperture", aperture);
 
@@ -114,18 +114,18 @@ public class PostEffects : MonoBehaviour {
 
     if (useCheap) {
       grabTextureD.DiscardContents();
-      Graphics.Blit(targetTexture, grabTextureD, material, 4);
+      Graphics.Blit(src, grabTextureD, material, 4);
     } else {
       if (useCustomBufferSize) {
         grabTextureB.DiscardContents();
-        Graphics.Blit(targetTexture, grabTextureB, material, 2);
+        Graphics.Blit(src, grabTextureB, material, 2);
         grabTextureC.DiscardContents();
         Graphics.Blit(grabTextureB, grabTextureC, material, 2);
         grabTextureD.DiscardContents();
         Graphics.Blit(null, grabTextureD, material, 0);
       } else {
         grabTextureA.DiscardContents();
-        Graphics.Blit(targetTexture, grabTextureA, material, 5);
+        Graphics.Blit(src, grabTextureA, material, 5);
         grabTextureB.DiscardContents();
         Graphics.Blit(grabTextureA, grabTextureB, material, 2);
         grabTextureC.DiscardContents();
@@ -135,6 +135,6 @@ public class PostEffects : MonoBehaviour {
       }
     }
 
-    // Graphics.Blit(targetTexture, null, material, 3);
+    Graphics.Blit(src, null, material, 3);
   }
 }
