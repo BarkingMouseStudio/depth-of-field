@@ -33,10 +33,8 @@ public class DepthOfField : MonoBehaviour {
 
   void OnRenderImage(RenderTexture src, RenderTexture dest) {
     // Initialize textures
-    downsampleFactor = Mathf.Clamp(downsampleFactor, 2, 8);
-
-    int captureBufferWidth = Mathf.NextPowerOfTwo(Screen.width / downsampleFactor);
-    int captureBufferHeight = Mathf.NextPowerOfTwo(Screen.height / downsampleFactor);
+    int captureBufferWidth = 512; // Mathf.NextPowerOfTwo(Screen.width / downsampleFactor);
+    int captureBufferHeight = 256; // Mathf.NextPowerOfTwo(Screen.height / downsampleFactor);
 
     if (captureBufferWidth > captureBufferHeight) {
       captureBufferHeight = captureBufferWidth;
@@ -44,14 +42,17 @@ public class DepthOfField : MonoBehaviour {
       captureBufferWidth = captureBufferHeight;
     }
 
-    RenderTexture grabTextureA = CreateTexture(captureBufferWidth / 2, captureBufferHeight / 2);
-    material.SetTexture("_GrabTextureA", grabTextureA);
+    RenderTexture grabTextureA = CreateTexture(captureBufferWidth, captureBufferHeight);
+    material.SetTexture("_CaptureTex", grabTextureA);
 
-    RenderTexture grabTextureB = CreateTexture(captureBufferWidth / 4, captureBufferHeight / 4);
+    RenderTexture grabTextureB = CreateTexture(captureBufferWidth / 2, captureBufferHeight / 2);
     material.SetTexture("_GrabTextureB", grabTextureB);
 
-    RenderTexture grabTextureC = CreateTexture(captureBufferWidth / 2, captureBufferHeight / 2);
+    RenderTexture grabTextureC = CreateTexture(captureBufferWidth / 4, captureBufferHeight / 4);
     material.SetTexture("_GrabTextureC", grabTextureC);
+
+    RenderTexture grabTextureD = CreateTexture(captureBufferWidth / 2, captureBufferHeight / 2);
+    material.SetTexture("_GrabTextureD", grabTextureD);
 
     // Setup material variables
     Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
@@ -59,13 +60,16 @@ public class DepthOfField : MonoBehaviour {
 
     // Blit textures
     grabTextureA.DiscardContents();
-    Graphics.Blit(src, grabTextureA, material, 1);
+    Graphics.Blit(src, grabTextureA, material, 1); // First downsample
 
     grabTextureB.DiscardContents();
-    Graphics.Blit(grabTextureA, grabTextureB, material, 1);
+    Graphics.Blit(grabTextureA, grabTextureB, material, 1); // Second downsample
 
     grabTextureC.DiscardContents();
-    Graphics.Blit(null, grabTextureC, material, 0);
+    Graphics.Blit(grabTextureB, grabTextureC, material, 1); // Third downsample
+
+    grabTextureD.DiscardContents();
+    Graphics.Blit(null, grabTextureD, material, 0);
 
     Graphics.Blit(src, dest, material, 2);
 
@@ -73,5 +77,6 @@ public class DepthOfField : MonoBehaviour {
     RenderTexture.ReleaseTemporary(grabTextureA);
     RenderTexture.ReleaseTemporary(grabTextureB);
     RenderTexture.ReleaseTemporary(grabTextureC);
+    RenderTexture.ReleaseTemporary(grabTextureD);
   }
 }

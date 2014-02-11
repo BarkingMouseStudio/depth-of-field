@@ -1,8 +1,9 @@
 Shader "Post Effects/Depth of Field" {
   Properties {
     _MainTex ("", 2D) = "white" {}
-    _GrabTextureA ("", 2D) = "white" {}
     _GrabTextureB ("", 2D) = "white" {}
+    _GrabTextureC ("", 2D) = "white" {}
+    _GrabTextureD ("", 2D) = "white" {}
   }
 
   SubShader {
@@ -17,12 +18,12 @@ Shader "Post Effects/Depth of Field" {
 
       #include "UnityCG.cginc"
 
-      uniform sampler2D _GrabTextureA;
       uniform sampler2D _GrabTextureB;
+      uniform sampler2D _GrabTextureC;
 
       half4 frag(v2f_img i) : COLOR {
-        half4 blurA = tex2D(_GrabTextureA, i.uv);
-        half4 blurB = tex2D(_GrabTextureB, i.uv);
+        half4 blurA = tex2D(_GrabTextureB, i.uv);
+        half4 blurB = tex2D(_GrabTextureC, i.uv);
         return lerp(blurA, blurB, min(blurB.a, blurA.a));
       }
       ENDCG
@@ -92,10 +93,10 @@ Shader "Post Effects/Depth of Field" {
       #include "UnityCG.cginc"
 
       uniform sampler2D _MainTex;
-      uniform sampler2D _GrabTextureC;
+      uniform sampler2D _GrabTextureD;
 
       half4 frag(v2f_img i) : COLOR {
-        half4 colorA = tex2D(_GrabTextureC, i.uv);
+        half4 colorA = tex2D(_GrabTextureD, i.uv);
         half4 colorB = tex2D(_MainTex, i.uv);
         return lerp(colorB, colorA, colorB.a);
       }
