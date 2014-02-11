@@ -1,34 +1,13 @@
 Shader "Post Effects/Depth of Field" {
   Properties {
-    _MainTex ("Dont use this, Used by code", 2D) = "white" {}
-    _BlurTexA ("Dont use this, Used by code", 2D) = "white" {}
-    _BlurTexB ("Dont use this, Used by code", 2D) = "white" {}
+    _MainTex ("", 2D) = "white" {}
+    _GrabTextureB ("", 2D) = "white" {}
+    _GrabTextureC ("", 2D) = "white" {}
+    _GrabTextureD ("", 2D) = "white" {}
   }
 
   SubShader {
-    Pass { // Pass 0 - Blend between midground and background
-      ZTest Always Cull Off ZWrite Off
-      Fog { Mode off }
-      Blend Off
-      CGPROGRAM
-      #pragma vertex vert_img
-      #pragma fragment frag
-      #pragma fragmentoption ARB_precision_hint_fastest
-
-      #include "UnityCG.cginc"
-
-      uniform sampler2D _BlurTexA;
-      uniform sampler2D _BlurTexB;
-
-      half4 frag(v2f_img i) : COLOR {
-        half4 blurA = tex2D(_BlurTexA, i.uv);
-        half4 blurB = tex2D(_BlurTexB, i.uv);
-        return lerp(blurA, blurB, min(blurB.a, blurA.a));
-      }
-      ENDCG
-    }
-
-    Pass { // Pass 1 - Blur (small kernel)
+    Pass { // Pass 0 - Blur (small kernel)
       ZTest Always Cull Off ZWrite Off
       Fog { Mode off }
       Blend Off
@@ -71,7 +50,7 @@ Shader "Post Effects/Depth of Field" {
       ENDCG
     }
 
-    Pass { // Pass 2 - Blur (large kernel)
+    Pass { // Pass 1 - Blur (large kernel)
       ZTest Always Cull Off ZWrite Off
       Fog { Mode off }
       Blend Off
@@ -122,6 +101,28 @@ Shader "Post Effects/Depth of Field" {
       ENDCG
     }
 
+    Pass { // Pass 2 - Blend between midground and background
+      ZTest Always Cull Off ZWrite Off
+      Fog { Mode off }
+      Blend Off
+      CGPROGRAM
+      #pragma vertex vert_img
+      #pragma fragment frag
+      #pragma fragmentoption ARB_precision_hint_fastest
+
+      #include "UnityCG.cginc"
+
+      uniform sampler2D _GrabTextureB;
+      uniform sampler2D _GrabTextureC;
+
+      half4 frag(v2f_img i) : COLOR {
+        half4 blurA = tex2D(_GrabTextureB, i.uv);
+        half4 blurB = tex2D(_GrabTextureC, i.uv);
+        return lerp(blurA, blurB, min(blurB.a, blurA.a));
+      }
+      ENDCG
+    }
+
     Pass { // Pass 3 - blend between focused and blurred
       ZTest Always Cull Off ZWrite Off
       Fog { Mode off }
@@ -135,10 +136,10 @@ Shader "Post Effects/Depth of Field" {
       #include "UnityCG.cginc"
 
       uniform sampler2D _MainTex;
-      uniform sampler2D _BlurTexD;
+      uniform sampler2D _GrabTextureD;
 
       half4 frag(v2f_img i) : COLOR {
-        half4 colorA = tex2D(_BlurTexD, i.uv);
+        half4 colorA = tex2D(_GrabTextureD, i.uv);
         half4 colorB = tex2D(_MainTex, i.uv);
         return lerp(colorB, colorA, colorB.a);
       }
@@ -184,43 +185,6 @@ Shader "Post Effects/Depth of Field" {
         sample += tex2D(_MainTex, i.uv2[2]) * 0.175;
         sample += tex2D(_MainTex, i.uv2[3]) * 0.175;
         return sample;
-      }
-      ENDCG
-    }
-
-    Pass { // Pass 5
-      ZTest Always Cull Off ZWrite Off
-      Fog { Mode off }
-      Blend Off
-
-      CGPROGRAM
-      #pragma vertex vert_img
-      #pragma fragment frag
-      #pragma fragmentoption ARB_precision_hint_fastest
-      #pragma exclude_renderers d3d11 xbox360
-
-      #include "UnityCG.cginc"
-
-      uniform sampler2D _MainTex;
-      uniform half4 _MainTex_TexelSize;
-      uniform fixed _Aberration;
-      uniform float _Vignetting;
-
-      // Offset to reduce banding
-      const float3 banding_offset = float3(0, 0.0013, 0.0026);
-
-      half4 frag(v2f_img i) : COLOR {
-        half2 coords = (i.uv - 0.5) * 2.0;
-        half2 offset = _MainTex_TexelSize.xy * _Aberration * coords * dot(coords, coords);
-
-        half4 color = tex2D(_MainTex, i.uv);
-        color.r = tex2D(_MainTex, i.uv - (offset * 0.25)).r;
-        color.b = tex2D(_MainTex, i.uv + offset).b;
-
-        coords = i.uv - 0.5;
-        color.rgb *= 1.0 - dot(coords, coords) * _Vignetting;
-        color.rgb += banding_offset;
-        return color;
       }
       ENDCG
     }

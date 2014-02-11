@@ -1,94 +1,73 @@
 using UnityEngine;
 using System.Collections;
 
-// [ExecuteInEditMode]
+[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
 public class DepthOfField : MonoBehaviour {
-  protected internal RenderTexture targetTexture;
 
-  private RenderTexture grabTextureA;
-  private RenderTexture grabTextureB;
-  private RenderTexture grabTextureC;
-  private RenderTexture grabTextureD;
+  public Transform focus;
+  public float aperture = 3;
 
-  public float aberration = 0;
-  public float vignetting = 0;
+  [Range(2, 8)]
+  public int downsampleFactor = 4;
 
   [HideInInspector]
   public Shader shader;
-  protected internal Material material;
-  public Transform focus;
-  public float aperture = 1;
 
-  public int captureBufferWidth = 512;
-  public int captureBufferHeight = 256;
+  [HideInInspector]
+  public Material material;
 
-  public bool useCheap = false;
+  private int scale = 1; // Used for retina
 
-  public void Awake() {
+  private RenderTexture GetTemporaryTexture(int width, int height) {
+    RenderTexture temporaryTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+    temporaryTexture.wrapMode = TextureWrapMode.Clamp;
+    temporaryTexture.useMipMap = false;
+    temporaryTexture.isPowerOfTwo = true;
+    temporaryTexture.filterMode = FilterMode.Bilinear;
+    return temporaryTexture;
+  }
+
+  void Awake() {
     material = new Material(shader);
-
-    int ajustedforSquareCaptureBufferWidth = captureBufferWidth;
-    int ajustedforSquareCaptureBufferHeight = captureBufferHeight;
-
-    targetTexture = new RenderTexture(Screen.width, Screen.height, 16, RenderTextureFormat.ARGB32);
-    targetTexture.wrapMode = TextureWrapMode.Clamp;
-    targetTexture.useMipMap = false;
-    targetTexture.isPowerOfTwo = false;
-    targetTexture.filterMode = FilterMode.Bilinear;
-    targetTexture.Create();
-
-    grabTextureD = new RenderTexture(captureBufferWidth / 2, captureBufferHeight / 2, 0, RenderTextureFormat.ARGB32);
-    grabTextureD.wrapMode = TextureWrapMode.Clamp;
-    grabTextureD.useMipMap = false;
-    targetTexture.isPowerOfTwo = true;
-    grabTextureD.filterMode = FilterMode.Bilinear;
-    grabTextureD.Create();
-    material.SetTexture("_BlurTexD", grabTextureD);
-
-    grabTextureA = new RenderTexture(captureBufferWidth, captureBufferHeight, 0, RenderTextureFormat.ARGB32);
-    grabTextureA.wrapMode = TextureWrapMode.Clamp;
-    grabTextureA.useMipMap = false;
-    targetTexture.isPowerOfTwo = true;
-    grabTextureA.filterMode = FilterMode.Bilinear;
-    grabTextureA.Create();
-    Shader.SetGlobalTexture("_CaptureTex", grabTextureA);
-
-    grabTextureB = new RenderTexture(ajustedforSquareCaptureBufferWidth / 2, ajustedforSquareCaptureBufferHeight / 2, 0, RenderTextureFormat.ARGB32);
-    grabTextureB.wrapMode = TextureWrapMode.Clamp;
-    grabTextureB.useMipMap = false;
-    targetTexture.isPowerOfTwo = true;
-    grabTextureB.filterMode = FilterMode.Bilinear;
-    grabTextureB.Create();
-    material.SetTexture("_BlurTexA", grabTextureB);
-
-    grabTextureC = new RenderTexture(ajustedforSquareCaptureBufferWidth / 4, ajustedforSquareCaptureBufferHeight / 4, 0, RenderTextureFormat.ARGB32);
-    grabTextureC.wrapMode = TextureWrapMode.Clamp;
-    grabTextureC.useMipMap = false;
-    targetTexture.isPowerOfTwo = true;
-    grabTextureC.filterMode = FilterMode.Bilinear;
-    grabTextureC.Create();
-    material.SetTexture("_BlurTexB", grabTextureC);
-
     camera.depthTextureMode = DepthTextureMode.None; // Explicitly disable depthmap
+    scale = Screen.dpi >= 220 ? 2 : 1; // Multiply downsampleFactor by scale to compensate for retina
   }
 
   void OnRenderImage(RenderTexture src, RenderTexture dest) {
+    int temporaryWidth = Mathf.NextPowerOfTwo(Screen.width / (downsampleFactor * scale));
+    int temporaryHeight = Mathf.NextPowerOfTwo(Screen.height / (downsampleFactor * scale));
+    if (temporaryWidth > temporaryHeight) {
+      temporaryHeight = temporaryWidth;
+    } else {
+      temporaryWidth = temporaryHeight;
+    }
+
+    // Set depth of field variables
     Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
     Shader.SetGlobalFloat("_DepthAperture", aperture);
 
-    material.SetFloat("_Aberration", aberration);
-    material.SetFloat("_Vignetting", vignetting);
+    // Create temporary textures
+    var grabTextureA = GetTemporaryTexture(temporaryWidth, temporaryHeight);
+    var grabTextureB = GetTemporaryTexture(temporaryWidth / 2, temporaryHeight / 2);
+    var grabTextureC = GetTemporaryTexture(temporaryWidth / 4, temporaryHeight / 4);
+    var grabTextureD = GetTemporaryTexture(temporaryWidth / 2, temporaryHeight / 2);
 
-    grabTextureA.DiscardContents();
-    Graphics.Blit(src, grabTextureA, material, 5);
-    grabTextureB.DiscardContents();
-    Graphics.Blit(grabTextureA, grabTextureB, material, 2);
-    grabTextureC.DiscardContents();
-    Graphics.Blit(grabTextureB, grabTextureC, material, 2);
-    grabTextureD.DiscardContents();
-    Graphics.Blit(null, grabTextureD, material, 0);
+    // Pass in textures
+    material.SetTexture("_GrabTextureB", grabTextureB);
+    material.SetTexture("_GrabTextureC", grabTextureC);
+    material.SetTexture("_GrabTextureD", grabTextureD);
 
-    Graphics.Blit(src, null, material, 3);
+    Graphics.Blit(src, grabTextureA, material, 0); // Downsample 1
+    Graphics.Blit(grabTextureA, grabTextureB, material, 1); // Downsample 2
+    Graphics.Blit(grabTextureB, grabTextureC, material, 1); // Upsample
+    Graphics.Blit(null, grabTextureD, material, 2); // Blend midground and background
+    Graphics.Blit(src, dest, material, 3); // Blend foreground and background
+
+    // Release textures
+    RenderTexture.ReleaseTemporary(grabTextureA);
+    RenderTexture.ReleaseTemporary(grabTextureB);
+    RenderTexture.ReleaseTemporary(grabTextureC);
+    RenderTexture.ReleaseTemporary(grabTextureD);
   }
 }
