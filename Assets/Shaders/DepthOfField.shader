@@ -7,24 +7,45 @@ Shader "Post Effects/Depth of Field" {
   }
 
   SubShader {
-    Pass { // Pass 0 - Blend between midground and background
+    Pass { // Pass 0 - Blur (small kernel)
       ZTest Always Cull Off ZWrite Off
       Fog { Mode off }
       Blend Off
+
       CGPROGRAM
-      #pragma vertex vert_img
+      #pragma vertex vert
       #pragma fragment frag
       #pragma fragmentoption ARB_precision_hint_fastest
 
       #include "UnityCG.cginc"
 
-      uniform sampler2D _GrabTextureB;
-      uniform sampler2D _GrabTextureC;
+      uniform sampler2D _MainTex;
+      uniform half4 _MainTex_TexelSize;
 
-      half4 frag(v2f_img i) : COLOR {
-        half4 blurA = tex2D(_GrabTextureB, i.uv);
-        half4 blurB = tex2D(_GrabTextureC, i.uv);
-        return lerp(blurA, blurB, min(blurB.a, blurA.a));
+      struct v2f {
+        half4 pos : SV_POSITION;
+        half2 uv : TEXCOORD0;
+        half2 uv2[4] : TEXCOORD1;
+      };
+
+      v2f vert(appdata_img v) {
+        v2f o;
+        o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
+        o.uv = v.texcoord;
+        o.uv2[0] = v.texcoord + _MainTex_TexelSize.xy * half2(1.5,1.5);
+        o.uv2[1] = v.texcoord + _MainTex_TexelSize.xy * half2(-1.5,-1.5);
+        o.uv2[2] = v.texcoord + _MainTex_TexelSize.xy * half2(1.5,-1.5);
+        o.uv2[3] = v.texcoord + _MainTex_TexelSize.xy * half2(-1.5,1.5);
+        return o;
+      }
+
+      half4 frag(v2f i) : COLOR {
+        half4 color = tex2D(_MainTex, i.uv) * 0.4;
+        color += tex2D(_MainTex, i.uv2[0]) * 0.15;
+        color += tex2D(_MainTex, i.uv2[1]) * 0.15;
+        color += tex2D(_MainTex, i.uv2[2]) * 0.15;
+        color += tex2D(_MainTex, i.uv2[3]) * 0.15;
+        return color;
       }
       ENDCG
     }
@@ -80,7 +101,29 @@ Shader "Post Effects/Depth of Field" {
       ENDCG
     }
 
-    Pass { // Pass 2 - blend between focused and blurred
+    Pass { // Pass 2 - Blend between midground and background
+      ZTest Always Cull Off ZWrite Off
+      Fog { Mode off }
+      Blend Off
+      CGPROGRAM
+      #pragma vertex vert_img
+      #pragma fragment frag
+      #pragma fragmentoption ARB_precision_hint_fastest
+
+      #include "UnityCG.cginc"
+
+      uniform sampler2D _GrabTextureB;
+      uniform sampler2D _GrabTextureC;
+
+      half4 frag(v2f_img i) : COLOR {
+        half4 blurA = tex2D(_GrabTextureB, i.uv);
+        half4 blurB = tex2D(_GrabTextureC, i.uv);
+        return lerp(blurA, blurB, min(blurB.a, blurA.a));
+      }
+      ENDCG
+    }
+
+    Pass { // Pass 3 - blend between focused and blurred
       ZTest Always Cull Off ZWrite Off
       Fog { Mode off }
       Blend Off
@@ -99,6 +142,49 @@ Shader "Post Effects/Depth of Field" {
         half4 colorA = tex2D(_GrabTextureD, i.uv);
         half4 colorB = tex2D(_MainTex, i.uv);
         return lerp(colorB, colorA, colorB.a);
+      }
+      ENDCG
+    }
+
+    Pass { // Pass 4
+      ZTest Always Cull Off ZWrite Off
+      Fog { Mode off }
+      Blend Off
+
+      CGPROGRAM
+      #pragma vertex vert
+      #pragma fragment frag
+      #pragma fragmentoption ARB_precision_hint_fastest
+
+      #include "UnityCG.cginc"
+
+      uniform sampler2D _MainTex;
+      uniform half4 _MainTex_TexelSize;
+
+      struct v2f {
+        half4 pos : SV_POSITION;
+        half2 uv : TEXCOORD0;
+        half2 uv2[4] : TEXCOORD1;
+      };
+
+      v2f vert(appdata_img v) {
+        v2f o;
+        o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
+        o.uv = v.texcoord;
+        o.uv2[0] = v.texcoord + _MainTex_TexelSize.xy * half2(2.5,2.5);
+        o.uv2[1] = v.texcoord + _MainTex_TexelSize.xy * half2(-2.5,-2.5);
+        o.uv2[2] = v.texcoord + _MainTex_TexelSize.xy * half2(2.5,-2.5);
+        o.uv2[3] = v.texcoord + _MainTex_TexelSize.xy * half2(-2.5,2.5);
+        return o;
+      }
+
+      half4 frag(v2f i) : COLOR {
+        half4 sample = tex2D(_MainTex, i.uv) * 0.3;
+        sample += tex2D(_MainTex, i.uv2[0]) * 0.175;
+        sample += tex2D(_MainTex, i.uv2[1]) * 0.175;
+        sample += tex2D(_MainTex, i.uv2[2]) * 0.175;
+        sample += tex2D(_MainTex, i.uv2[3]) * 0.175;
+        return sample;
       }
       ENDCG
     }

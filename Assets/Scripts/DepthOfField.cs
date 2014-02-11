@@ -6,7 +6,7 @@ using System.Collections;
 public class DepthOfField : MonoBehaviour {
 
   public Transform focus;
-  public float aperture = 1;
+  public float aperture = 3;
 
   [Range(2, 8)]
   public int downsampleFactor = 4;
@@ -17,63 +17,54 @@ public class DepthOfField : MonoBehaviour {
   [HideInInspector]
   public Material material;
 
-  RenderTexture CreateTexture(int width, int height) {
-    RenderTexture texture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
-    texture.wrapMode = TextureWrapMode.Clamp;
-    texture.useMipMap = false;
-    texture.isPowerOfTwo = true;
-    texture.filterMode = FilterMode.Bilinear;
-    return texture;
+  private int scale = 1; // Used for retina
+
+  private RenderTexture GetTemporaryTexture(int width, int height) {
+    RenderTexture temporaryTexture = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32);
+    temporaryTexture.wrapMode = TextureWrapMode.Clamp;
+    temporaryTexture.useMipMap = false;
+    temporaryTexture.isPowerOfTwo = true;
+    temporaryTexture.filterMode = FilterMode.Bilinear;
+    return temporaryTexture;
   }
 
   void Awake() {
     material = new Material(shader);
     camera.depthTextureMode = DepthTextureMode.None; // Explicitly disable depthmap
+    scale = Screen.dpi >= 220 ? 2 : 1; // Multiply downsampleFactor by scale to compensate for retina
   }
 
   void OnRenderImage(RenderTexture src, RenderTexture dest) {
-    // Initialize textures
-    int captureBufferWidth = 512; // Mathf.NextPowerOfTwo(Screen.width / downsampleFactor);
-    int captureBufferHeight = 256; // Mathf.NextPowerOfTwo(Screen.height / downsampleFactor);
-
-    if (captureBufferWidth > captureBufferHeight) {
-      captureBufferHeight = captureBufferWidth;
+    int temporaryWidth = Mathf.NextPowerOfTwo(Screen.width / (downsampleFactor * scale));
+    int temporaryHeight = Mathf.NextPowerOfTwo(Screen.height / (downsampleFactor * scale));
+    if (temporaryWidth > temporaryHeight) {
+      temporaryHeight = temporaryWidth;
     } else {
-      captureBufferWidth = captureBufferHeight;
+      temporaryWidth = temporaryHeight;
     }
 
-    RenderTexture grabTextureA = CreateTexture(captureBufferWidth, captureBufferHeight);
-    material.SetTexture("_CaptureTex", grabTextureA);
-
-    RenderTexture grabTextureB = CreateTexture(captureBufferWidth / 2, captureBufferHeight / 2);
-    material.SetTexture("_GrabTextureB", grabTextureB);
-
-    RenderTexture grabTextureC = CreateTexture(captureBufferWidth / 4, captureBufferHeight / 4);
-    material.SetTexture("_GrabTextureC", grabTextureC);
-
-    RenderTexture grabTextureD = CreateTexture(captureBufferWidth / 2, captureBufferHeight / 2);
-    material.SetTexture("_GrabTextureD", grabTextureD);
-
-    // Setup material variables
+    // Set depth of field variables
     Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
     Shader.SetGlobalFloat("_DepthAperture", aperture);
 
-    // Blit textures
-    grabTextureA.DiscardContents();
-    Graphics.Blit(src, grabTextureA, material, 1); // First downsample
+    // Create temporary textures
+    var grabTextureA = GetTemporaryTexture(temporaryWidth, temporaryHeight);
+    var grabTextureB = GetTemporaryTexture(temporaryWidth / 2, temporaryHeight / 2);
+    var grabTextureC = GetTemporaryTexture(temporaryWidth / 4, temporaryHeight / 4);
+    var grabTextureD = GetTemporaryTexture(temporaryWidth / 2, temporaryHeight / 2);
 
-    grabTextureB.DiscardContents();
-    Graphics.Blit(grabTextureA, grabTextureB, material, 1); // Second downsample
+    // Pass in textures
+    material.SetTexture("_GrabTextureB", grabTextureB);
+    material.SetTexture("_GrabTextureC", grabTextureC);
+    material.SetTexture("_GrabTextureD", grabTextureD);
 
-    grabTextureC.DiscardContents();
-    Graphics.Blit(grabTextureB, grabTextureC, material, 1); // Third downsample
+    Graphics.Blit(src, grabTextureA, material, 0); // Downsample 1
+    Graphics.Blit(grabTextureA, grabTextureB, material, 1); // Downsample 2
+    Graphics.Blit(grabTextureB, grabTextureC, material, 1); // Upsample
+    Graphics.Blit(null, grabTextureD, material, 2); // Blend midground and background
+    Graphics.Blit(src, dest, material, 3); // Blend foreground and background
 
-    grabTextureD.DiscardContents();
-    Graphics.Blit(null, grabTextureD, material, 0);
-
-    Graphics.Blit(src, dest, material, 2);
-
-    // Cleanup
+    // Release textures
     RenderTexture.ReleaseTemporary(grabTextureA);
     RenderTexture.ReleaseTemporary(grabTextureB);
     RenderTexture.ReleaseTemporary(grabTextureC);
