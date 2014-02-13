@@ -49,9 +49,10 @@ Shader "Mobile/Depth of Field/Specular (Surface)" {
     }
 
     void surf(Input IN, inout SurfaceOutput o) {
-      o.Albedo = tex2D(_MainTex, IN.uv_MainTex).rgb;
+      half4 color = tex2D(_MainTex, IN.uv_MainTex);
+      o.Albedo = color.rgb;
       o.Normal = UnpackNormal(tex2D(_BumpMap, IN.uv_BumpMap));
-      o.Gloss = 1.0f;
+      o.Gloss = color.a;
       o.Specular = _Shininess;
 
       // Place `vert` depth calculation into alpha channel
