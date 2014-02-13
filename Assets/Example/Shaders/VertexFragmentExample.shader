@@ -1,4 +1,4 @@
-Shader "Mobile/Diffuse (DoF)/VertFrag" {
+Shader "Mobile/Depth of Field/Diffuse (VertFrag)" {
   Properties {
     _MainTex ("Base (RGB)", 2D) = "white" {}
   }

@@ -1,4 +1,4 @@
-Shader "Mobile/Diffuse (DoF)/Surface" {
+Shader "Mobile/Depth of Field/Diffuse (Surface)" {
   Properties {
     _MainTex ("Base (RGB)", 2D) = "white" {}
   }
