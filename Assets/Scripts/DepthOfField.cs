@@ -6,6 +6,7 @@ using System.Collections;
 public class DepthOfField : MonoBehaviour {
 
   public Transform focus;
+  public float focalDistance = 10.0f;
   public float aperture = 3;
 
   [Range(2, 8)]
@@ -44,7 +45,11 @@ public class DepthOfField : MonoBehaviour {
     }
 
     // Set depth of field variables
-    Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
+    if (focus != null) {
+      Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
+    } else {
+      Shader.SetGlobalFloat("_DepthFar", focalDistance);
+    }
     Shader.SetGlobalFloat("_DepthAperture", aperture);
 
     // Create temporary textures
