@@ -10,7 +10,7 @@ Shader "Mobile/Depth of Field/Diffuse (Surface)" {
     #pragma surface surf Lambert vertex:vert
 
     #include "UnityCG.cginc"
-    #include "DepthCG.cginc"
+    #include "Assets/DepthOfField/Shaders/DepthCG.cginc"
 
     sampler2D _MainTex;
 

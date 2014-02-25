@@ -11,7 +11,7 @@ Shader "Mobile/Depth of Field/Normal (Surface)" {
     #pragma surface surf Lambert vertex:vert
 
     #include "UnityCG.cginc"
-    #include "DepthCG.cginc"
+    #include "Assets/DepthOfField/Shaders/DepthCG.cginc"
 
     sampler2D _MainTex;
     sampler2D _BumpMap;

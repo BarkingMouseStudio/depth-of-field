@@ -13,7 +13,7 @@ Shader "Mobile/Depth of Field/Diffuse (VertFrag)" {
 
       #include "UnityCG.cginc"
       #include "Lighting.cginc"
-      #include "DepthCG.cginc"
+      #include "Assets/DepthOfField/Shaders/DepthCG.cginc"
 
       struct v2f {
         float4 position : SV_POSITION;

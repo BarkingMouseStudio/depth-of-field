@@ -14,7 +14,7 @@ Shader "Mobile/Depth of Field/Specular (Surface)" {
 
     #include "UnityCG.cginc"
     #include "Lighting.cginc"
-    #include "DepthCG.cginc"
+    #include "Assets/DepthOfField/Shaders/DepthCG.cginc"
 
     sampler2D _MainTex;
     sampler2D _BumpMap;
