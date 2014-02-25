@@ -13,6 +13,14 @@ When in doubt we provide a number of example shaders in Example/Shaders/ that de
 
 #### Surface Shaders
 
+0. Note that in order for Unity to find the required CG Include you should use one of the following methods:
+
+    a. Copy DepthCG.cginc shader include next to your other shaders
+
+    b. Use an absolute path to reference DepthCG.cginc (e.g. Assets/Absolute/Path/To/DepthCG.cginc)
+
+    b. Use a relative path to reference DepthCG.cginc (e.g. ./Wherever/You/Put/DepthCG.cginc)
+
 1. Add the DepthCG.cginc include just after your surface pragma. This will import the necessary helper function for calculating distance from the camera. If you already have includes, DepthCG should be first.
 
   ```glsl
@@ -60,6 +68,14 @@ When in doubt we provide a number of example shaders in Example/Shaders/ that de
   ```
 
 #### Vertex Shaders
+
+0. Note that in order for Unity to find the required CG Include you should use one of the following methods:
+
+    a. Copy DepthCG.cginc shader include next to your other shaders
+
+    b. Use an absolute path to reference DepthCG.cginc (e.g. Assets/Absolute/Path/To/DepthCG.cginc)
+
+    b. Use a relative path to reference DepthCG.cginc (e.g. ./Wherever/You/Put/DepthCG.cginc)
 
 1. Add the DepthCG.cginc include just after your vert/frag pragmas. This will import the necessary helper function for calculating distance from the camera. If you already have includes, DepthCG should be first.
 
