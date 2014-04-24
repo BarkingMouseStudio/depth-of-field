@@ -12,7 +12,6 @@ public class DepthOfField : MonoBehaviour {
   [Range(2, 8)]
   public int downsampleFactor = 4;
 
-  [HideInInspector]
   public Shader shader;
 
   [HideInInspector]
@@ -29,13 +28,18 @@ public class DepthOfField : MonoBehaviour {
     return temporaryTexture;
   }
 
-  void Awake() {
-    material = new Material(shader);
-    camera.depthTextureMode = DepthTextureMode.None; // Explicitly disable depthmap
-    scale = Screen.dpi >= 220 ? 2 : 1; // Multiply downsampleFactor by scale to compensate for retina
-  }
-
   void OnRenderImage(RenderTexture src, RenderTexture dest) {
+    if (shader == null) {
+      Debug.LogError("Assign the shader provided in DepthOfField/Shaders/DepthOfField.shader to the DepthOfField component on your camera", this);
+      return;
+    }
+
+    if (material == null) {
+      material = new Material(shader);
+      camera.depthTextureMode = DepthTextureMode.None; // Explicitly disable depthmap
+      scale = Screen.dpi >= 220 ? 2 : 1; // Multiply downsampleFactor by scale to compensate for retina
+    }
+
     int temporaryWidth = Mathf.NextPowerOfTwo(Screen.width / (downsampleFactor * scale));
     int temporaryHeight = Mathf.NextPowerOfTwo(Screen.height / (downsampleFactor * scale));
     if (temporaryWidth > temporaryHeight) {
