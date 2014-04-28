@@ -1,4 +1,4 @@
-Shader "Post Effects/Depth of Field" {
+Shader "Post Effects/Depth of Field (Mobile)" {
   Properties {
     _MainTex ("", 2D) = "white" {}
     _GrabTextureB ("", 2D) = "white" {}

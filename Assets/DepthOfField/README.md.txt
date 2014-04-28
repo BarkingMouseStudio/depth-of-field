@@ -5,8 +5,6 @@ Documentation
 
 1. Add DepthOfField.cs to the camera you wish to apply depth of field. While you can adjust parameters at any time we recommend finishing the setup so you can preview your changes.
 
-2. Assign the shader provided in DepthOfField/Shaders/DepthOfField.shader to the "Depth Of Field" component on your camera.
-
 ### Modifying your shaders
 
 When in doubt we provide a number of example shaders in DepthOfField/Example/Shaders/ that demonstrates a fully working surface and vertex/fragment shaders.
