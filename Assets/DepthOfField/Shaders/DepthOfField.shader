@@ -32,10 +32,17 @@ Shader "Post Effects/Depth of Field (Mobile)" {
         v2f o;
         o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
         o.uv = v.texcoord;
-        o.uv2[0] = v.texcoord + _MainTex_TexelSize.xy * half2(1.5,1.5);
-        o.uv2[1] = v.texcoord + _MainTex_TexelSize.xy * half2(-1.5,-1.5);
-        o.uv2[2] = v.texcoord + _MainTex_TexelSize.xy * half2(1.5,-1.5);
-        o.uv2[3] = v.texcoord + _MainTex_TexelSize.xy * half2(-1.5,1.5);
+
+        #if UNITY_UV_STARTS_AT_TOP
+        if (_MainTex_TexelSize.y < 0) {
+          o.uv.y = 1 - o.uv.y;
+        }
+        #endif
+
+        o.uv2[0] = o.uv + _MainTex_TexelSize.xy * half2(+1.5, +1.5);
+        o.uv2[1] = o.uv + _MainTex_TexelSize.xy * half2(-1.5, -1.5);
+        o.uv2[2] = o.uv + _MainTex_TexelSize.xy * half2(+1.5, -1.5);
+        o.uv2[3] = o.uv + _MainTex_TexelSize.xy * half2(-1.5, +1.5);
         return o;
       }
 
@@ -78,11 +85,18 @@ Shader "Post Effects/Depth of Field (Mobile)" {
       v2f vert(appdata_img v) {
         v2f o;
         o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
-        o.uv.xy = v.texcoord.xy;
-        o.uv01 = v.texcoord.xyxy + _MainTex_TexelSize.xyxy * half4(1.5, +1.5, -1.5, -1.5);
-        o.uv23 = v.texcoord.xyxy + _MainTex_TexelSize.xyxy * half4(1.5, -1.5, -1.5, +1.5);
-        o.uv45 = v.texcoord.xyxy + _MainTex_TexelSize.xyxy * half4(0.0, +2.5, -0.0, -2.5);
-        o.uv67 = v.texcoord.xyxy + _MainTex_TexelSize.xyxy * half4(2.5, -0.0, -2.5, +0.0);
+        o.uv = v.texcoord;
+
+        #if UNITY_UV_STARTS_AT_TOP
+        if (_MainTex_TexelSize.y < 0) {
+          o.uv.y = 1 - o.uv.y;
+        }
+        #endif
+
+        o.uv01 = o.uv.xyxy + _MainTex_TexelSize.xyxy * half4(1.5, +1.5, -1.5, -1.5);
+        o.uv23 = o.uv.xyxy + _MainTex_TexelSize.xyxy * half4(1.5, -1.5, -1.5, +1.5);
+        o.uv45 = o.uv.xyxy + _MainTex_TexelSize.xyxy * half4(0.0, +2.5, -0.0, -2.5);
+        o.uv67 = o.uv.xyxy + _MainTex_TexelSize.xyxy * half4(2.5, -0.0, -2.5, +0.0);
         return o;
       }
 
@@ -171,10 +185,17 @@ Shader "Post Effects/Depth of Field (Mobile)" {
         v2f o;
         o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
         o.uv = v.texcoord;
-        o.uv2[0] = v.texcoord + _MainTex_TexelSize.xy * half2(2.5,2.5);
-        o.uv2[1] = v.texcoord + _MainTex_TexelSize.xy * half2(-2.5,-2.5);
-        o.uv2[2] = v.texcoord + _MainTex_TexelSize.xy * half2(2.5,-2.5);
-        o.uv2[3] = v.texcoord + _MainTex_TexelSize.xy * half2(-2.5,2.5);
+
+        #if UNITY_UV_STARTS_AT_TOP
+        if (_MainTex_TexelSize.y < 0) {
+          o.uv.y = 1 - o.uv.y;
+        }
+        #endif
+
+        o.uv2[0] = o.uv + _MainTex_TexelSize.xy * half2(+2.5, +2.5);
+        o.uv2[1] = o.uv + _MainTex_TexelSize.xy * half2(-2.5, -2.5);
+        o.uv2[2] = o.uv + _MainTex_TexelSize.xy * half2(+2.5, -2.5);
+        o.uv2[3] = o.uv + _MainTex_TexelSize.xy * half2(-2.5, +2.5);
         return o;
       }
 
