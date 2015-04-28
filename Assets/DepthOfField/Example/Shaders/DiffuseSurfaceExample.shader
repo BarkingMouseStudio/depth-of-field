@@ -7,7 +7,7 @@ Shader "Mobile/Depth of Field/Diffuse (Surface)" {
     Tags { "RenderType"="Opaque" }
 
     CGPROGRAM
-    #pragma surface surf Lambert vertex:vert
+    #pragma surface surf Lambert vertex:vert keepalpha
 
     #include "UnityCG.cginc"
     #include "Assets/DepthOfField/Shaders/DepthCG.cginc"

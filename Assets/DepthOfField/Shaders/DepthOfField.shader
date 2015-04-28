@@ -209,6 +209,27 @@ Shader "Post Effects/Depth of Field (Mobile)" {
       }
       ENDCG
     }
+
+    Pass { // Pass 5 - render depth from alpha
+      ZTest Always Cull Off ZWrite Off
+      Fog { Mode off }
+      Blend Off
+
+      CGPROGRAM
+      #pragma vertex vert_img
+      #pragma fragment frag
+      #pragma fragmentoption ARB_precision_hint_fastest
+
+      #include "UnityCG.cginc"
+
+      uniform sampler2D _MainTex;
+
+      half4 frag(v2f_img i) : COLOR {
+        half4 c = tex2D(_MainTex, i.uv);
+        return half4(c.a, c.a, c.a, c.a);
+      }
+      ENDCG
+    }
   }
 
   Fallback off

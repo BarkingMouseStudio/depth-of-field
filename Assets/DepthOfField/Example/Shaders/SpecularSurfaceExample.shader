@@ -10,7 +10,7 @@ Shader "Mobile/Depth of Field/Specular (Surface)" {
     Tags { "RenderType"="Opaque" }
 
     CGPROGRAM
-    #pragma surface surf MobileBlinnPhong vertex:vert exclude_path:prepass noforwardadd halfasview
+    #pragma surface surf MobileBlinnPhong vertex:vert exclude_path:prepass noforwardadd halfasview keepalpha
 
     #include "UnityCG.cginc"
     #include "Lighting.cginc"

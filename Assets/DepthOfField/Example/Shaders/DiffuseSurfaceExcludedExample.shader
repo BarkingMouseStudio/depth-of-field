@@ -7,7 +7,7 @@ Shader "Mobile/Depth of Field/Diffuse Excluded (Surface)" {
     Tags { "RenderType"="Opaque" }
 
     CGPROGRAM
-    #pragma surface surf Lambert
+    #pragma surface surf Lambert keepalpha
 
     #include "UnityCG.cginc"
     #include "Assets/DepthOfField/Shaders/DepthCG.cginc"

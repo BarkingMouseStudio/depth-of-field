@@ -8,6 +8,7 @@ public class DepthOfField : MonoBehaviour {
   public Transform focus;
   public float focalDistance = 10.0f;
   public float aperture = 3;
+  public bool debug = false;
 
   [Range(2, 8)]
   public int downsampleFactor = 4;
@@ -28,7 +29,7 @@ public class DepthOfField : MonoBehaviour {
   }
 
   void Awake() {
-    camera.depthTextureMode = DepthTextureMode.None; // Explicitly disable depthmap
+    GetComponent<Camera>().depthTextureMode = DepthTextureMode.None; // Explicitly disable depthmap
   }
 
   void OnRenderImage(RenderTexture src, RenderTexture dest) {
@@ -40,6 +41,19 @@ public class DepthOfField : MonoBehaviour {
       material = new Material(shader);
     }
 
+    // Set depth of field variables
+    if (focus != null) {
+      Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
+    } else {
+      Shader.SetGlobalFloat("_DepthFar", focalDistance);
+    }
+    Shader.SetGlobalFloat("_DepthAperture", aperture);
+
+    if (debug) {
+      Graphics.Blit(src, dest, material, 5); // Render depth from alpha
+      return;
+    }
+
     int scale = Screen.dpi >= 220 ? 2 : 1; // Multiply downsampleFactor by scale to compensate for retina
 
     int temporaryWidth = Mathf.NextPowerOfTwo(Screen.width / (downsampleFactor * scale));
@@ -49,14 +63,6 @@ public class DepthOfField : MonoBehaviour {
     } else {
       temporaryWidth = temporaryHeight;
     }
-
-    // Set depth of field variables
-    if (focus != null) {
-      Shader.SetGlobalFloat("_DepthFar", Vector3.Distance(transform.position, focus.position));
-    } else {
-      Shader.SetGlobalFloat("_DepthFar", focalDistance);
-    }
-    Shader.SetGlobalFloat("_DepthAperture", aperture);
 
     // Create temporary textures
     var grabTextureA = GetTemporaryTexture(temporaryWidth, temporaryHeight);
